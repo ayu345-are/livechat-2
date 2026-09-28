@@ -51,7 +51,7 @@ function ambilAtauBuatIdBrowser() {
 const idBrowserSekarang = ambilAtauBuatIdBrowser()
 
 // 🔊 Suara notifikasi pesan masuk
-const suaraPesanMasuk = new Audio("notifikasi.mp3")
+const suaraPesanMasuk = new Audio("notifikasipesan.mp3")
 let pertamaKali = true
 
 // ambil nama user yg sudah pernah disimpan di local storage
@@ -245,6 +245,7 @@ onSnapshot(queryPesan, (cuplikan) => {
 
         // 🔊 bunyi jika ada pesan baru dari orang lain
         if (!pertamaKali && !sendiri) {
+            suaraPesanMasuk.currentTime = 0
             suaraPesanMasuk.play()
         }
     })
