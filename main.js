@@ -50,6 +50,10 @@ function ambilAtauBuatIdBrowser() {
 // simpan id browser pengguna saat ini ke variabel
 const idBrowserSekarang = ambilAtauBuatIdBrowser()
 
+// 🔊 Suara notifikasi pesan masuk
+const suaraPesanMasuk = new Audio("notifikasi.mp3")
+let pertamaKali = true
+
 // ambil nama user yg sudah pernah disimpan di local storage
 const usernameTersimpan = localStorage.getItem("livechat_username") || ""
 
@@ -109,8 +113,10 @@ if (usernameTersimpan) {
 daftarStiker.forEach((url) => {
     // buat elemen img untuk setiap stiker
     const img = document.createElement("img")
+
     // menentukan sumber gambar stiker dari url
     img.src = url
+
     // menambah nama class pilihan-stiker
     img.classList.add("pilihan-stiker")
 
@@ -145,6 +151,7 @@ function dapatkanDanKunciUsername() {
         // pemeriksaan kalau username masih kosong, tampilkan alert
         if (!username) {
             alert("Username tidak boleh kosong!")
+            return ""
         }
 
         // simpan username ke local storage
@@ -203,6 +210,7 @@ chatForm.addEventListener("submit", async (event) => {
                 message: message,
                 waktu: serverTimestamp()
             })
+
             // bersihkan input setelah mengirim pesan
             messageInput.value = ""
         } catch (error) {
@@ -234,7 +242,15 @@ onSnapshot(queryPesan, (cuplikan) => {
 
         // render pesan (memanggil fungsi renderPesan)
         renderPesan(data.username, data.message, waktu, data.tipe, sendiri)
+
+        // 🔊 bunyi jika ada pesan baru dari orang lain
+        if (!pertamaKali && !sendiri) {
+            suaraPesanMasuk.play()
+        }
     })
+
+    // setelah pertama kali memuat pesan, ubah menjadi false
+    pertamaKali = false
 
     // scroll chatBox ke bawah setiap kali ada pesan baru
     chatBox.scrollTop = chatBox.scrollHeight
@@ -270,7 +286,7 @@ function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = fals
             ${isiPesan}
         </div>
         <span class="time">${waktu}</span>
-    ` // backtick
+    `
 
     // menambahkan messageDiv ke chatBox
     chatBox.appendChild(messageDiv)
@@ -279,10 +295,14 @@ function renderPesan(username, message, waktu, tipe = "teks", diriSendiri = fals
 // Fungsi untuk mengubah String Nama menjadi Warna (HSL) yang konsisten
 function stringToColor(str) {
     let hash = 0
+
     for (let i = 0; i < str.length; i++) {
         hash = str.charCodeAt(i) + ((hash << 5) - hash)
     }
-    // Ambil nilai Hue 0 - 360, dengan saturation 65% & Lightness 40% agar warna tetap kontras/jelas
+
+    // Ambil nilai Hue 0 - 360, dengan saturation 65% & Lightness 40%
+    // agar warna tetap kontras/jelas
     const hue = Math.abs(hash) % 360
+
     return `hsl(${hue}, 65%, 40%)`
 }
