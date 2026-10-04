@@ -42,6 +42,9 @@ suaraNotifikasi.volume = 0.7
 // Supaya pesan lama tidak menghasilkan suara
 let pertamaKaliMemuat = true
 
+// Menyimpan ID pesan yang sudah pernah dilihat
+const pesanSudahDilihat = new Set()
+
 
 // Identifikasi browser menggunakan local storage
 function ambilAtauBuatIdBrowser() {
@@ -277,14 +280,29 @@ onSnapshot(queryPesan, (cuplikan) => {
     // Bersihkan chatBox sebelum menampilkan pesan baru
     chatBox.innerHTML = ""
 
-    // Menentukan apakah ada pesan dari orang lain
-    let adaPesanDariOrangLain = false
+
+    // =================================================
+    // PERTAMA KALI MEMUAT
+    // Pesan lama tidak akan menghasilkan suara
+    // =================================================
+
+    if (pertamaKaliMemuat) {
+
+        cuplikan.forEach((dokumen) => {
+
+            // simpan ID pesan lama
+            pesanSudahDilihat.add(dokumen.id)
+
+        })
+
+    }
 
 
-    cuplikan.forEach((doc) => {
+    // Menampilkan semua pesan
+    cuplikan.forEach((dokumen) => {
 
         // ambil data dari dokumen
-        const data = doc.data()
+        const data = dokumen.data()
 
         // membuat tampilan waktu
         const waktu = data.waktu.toDate().toLocaleTimeString(
@@ -310,13 +328,70 @@ onSnapshot(queryPesan, (cuplikan) => {
             sendiri
         )
 
-
-        // HANYA pesan dari orang lain
-        if (!sendiri && !pertamaKaliMemuat) {
-            adaPesanDariOrangLain = true
-        }
-
     })
+
+
+    // =================================================
+    // SETELAH PERTAMA KALI MEMUAT
+    // Cek pesan baru
+    // =================================================
+
+    if (!pertamaKaliMemuat) {
+
+        cuplikan.docChanges().forEach((perubahan) => {
+
+            // hanya proses pesan yang benar-benar baru
+            if (perubahan.type !== "added") {
+                return
+            }
+
+
+            // ambil ID pesan
+            const idPesan = perubahan.doc.id
+
+
+            // kalau pesan sudah pernah diproses,
+            // jangan bunyikan lagi
+            if (pesanSudahDilihat.has(idPesan)) {
+                return
+            }
+
+
+            // tandai pesan sebagai sudah dilihat
+            pesanSudahDilihat.add(idPesan)
+
+
+            // ambil data pesan baru
+            const dataBaru = perubahan.doc.data()
+
+
+            // =================================================
+            // PENTING:
+            // Kalau pesan berasal dari browser sendiri,
+            // JANGAN bunyikan notifikasi.
+            //
+            // Kalau berasal dari browser lain,
+            // BUNYIKAN notifikasi.
+            // =================================================
+
+            if (dataBaru.idBrowser !== idBrowserSekarang) {
+
+                suaraNotifikasi.currentTime = 0
+
+                suaraNotifikasi.play().catch((error) => {
+
+                    console.log(
+                        "Suara notifikasi tidak dapat diputar:",
+                        error
+                    )
+
+                })
+
+            }
+
+        })
+
+    }
 
 
     // Setelah halaman selesai pertama kali dimuat
@@ -324,22 +399,6 @@ onSnapshot(queryPesan, (cuplikan) => {
 
         pertamaKaliMemuat = false
 
-    }
-
-    // Jika ada pesan dari orang lain,
-    // bunyikan notifikasi
-    else if (adaPesanDariOrangLain) {
-
-        suaraNotifikasi.currentTime = 0
-
-        suaraNotifikasi.play().catch((error) => {
-
-            console.log(
-                "Suara notifikasi tidak dapat diputar:",
-                error
-            )
-
-        })
     }
 
 
