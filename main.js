@@ -36,10 +36,10 @@ const messagesCollection = collection(db, "messages")
 // SUARA NOTIFIKASI
 // =====================================================
 
-const suaraNotifikasi = new Audio("notifikasipesan.mp3")
+const suaraNotifikasi = new Audio("notifikasi.mp3")
 suaraNotifikasi.volume = 0.7
 
-// Menandai apakah chat pertama kali dimuat
+// Supaya pesan lama tidak menghasilkan suara
 let pertamaKaliMemuat = true
 
 
@@ -50,7 +50,6 @@ function ambilAtauBuatIdBrowser() {
     let idBrowser = localStorage.getItem("livechatpunyaku123")
 
     // periksa isi variabel browser id
-    // jika variabel tersebut tidak ada isinya
     if (!idBrowser) {
 
         // buat ID unik acak sederhana
@@ -125,10 +124,8 @@ const tombolStiker = document.getElementById("tombol-stiker")
 // jika nama sudah disimpan sebelumnya, isi nilai username lalu kunci
 if (usernameTersimpan) {
 
-    // isi nilai textbox username input
     usernameInput.value = usernameTersimpan
 
-    // disabled elemen username input
     usernameInput.disabled = true
 }
 
@@ -136,13 +133,10 @@ if (usernameTersimpan) {
 // Render popup stiker
 daftarStiker.forEach((url) => {
 
-    // buat elemen img untuk setiap stiker
     const img = document.createElement("img")
 
-    // menentukan sumber gambar stiker dari url
     img.src = url
 
-    // menambah nama class pilihan-stiker
     img.classList.add("pilihan-stiker")
 
     // mengirim stiker ke firestore saat diklik
@@ -155,7 +149,6 @@ daftarStiker.forEach((url) => {
         img.style.display = "none"
     }
 
-    // elemen img ditambahkan ke divDaftarStiker
     divDaftarStiker.appendChild(img)
 })
 
@@ -163,7 +156,6 @@ daftarStiker.forEach((url) => {
 // menampilkan panel pemilih stiker saat tombol stiker diklik
 tombolStiker.onclick = () => {
 
-    // toggle class tersembunyi
     pemilihStiker.classList.toggle("tersembunyi")
 }
 
@@ -212,10 +204,15 @@ async function kirimStiker(url) {
     try {
 
         await addDoc(messagesCollection, {
+
             username: username,
+
             idBrowser: idBrowserSekarang,
+
             message: url,
+
             waktu: serverTimestamp(),
+
             tipe: "stiker"
         })
 
@@ -244,9 +241,13 @@ chatForm.addEventListener("submit", async (event) => {
         try {
 
             await addDoc(messagesCollection, {
+
                 username: username,
+
                 idBrowser: idBrowserSekarang,
+
                 message: message,
+
                 waktu: serverTimestamp()
             })
 
@@ -276,10 +277,10 @@ onSnapshot(queryPesan, (cuplikan) => {
     // Bersihkan chatBox sebelum menampilkan pesan baru
     chatBox.innerHTML = ""
 
-    // penanda apakah ada pesan baru dari orang lain
-    let adaPesanBaru = false
+    // Menentukan apakah ada pesan dari orang lain
+    let adaPesanDariOrangLain = false
 
-    // tampilkan pesan baru di chatBox
+
     cuplikan.forEach((doc) => {
 
         // ambil data dari dokumen
@@ -294,8 +295,11 @@ onSnapshot(queryPesan, (cuplikan) => {
             }
         )
 
+
         // tentukan apakah diri sendiri atau bukan
-        const sendiri = data.idBrowser === idBrowserSekarang
+        const sendiri =
+            data.idBrowser === idBrowserSekarang
+
 
         // render pesan
         renderPesan(
@@ -306,31 +310,48 @@ onSnapshot(queryPesan, (cuplikan) => {
             sendiri
         )
 
-        // cek pesan dari orang lain
+
+        // HANYA pesan dari orang lain
         if (!sendiri && !pertamaKaliMemuat) {
-            adaPesanBaru = true
+            adaPesanDariOrangLain = true
         }
+
     })
 
-    // Setelah tampilan pertama selesai
+
+    // Setelah halaman selesai pertama kali dimuat
     if (pertamaKaliMemuat) {
 
         pertamaKaliMemuat = false
 
-    } else if (adaPesanBaru) {
+    }
 
-        // mainkan suara notifikasi
+    // Jika ada pesan dari orang lain,
+    // bunyikan notifikasi
+    else if (adaPesanDariOrangLain) {
+
         suaraNotifikasi.currentTime = 0
 
         suaraNotifikasi.play().catch((error) => {
-            console.log("Suara notifikasi tidak dapat diputar:", error)
+
+            console.log(
+                "Suara notifikasi tidak dapat diputar:",
+                error
+            )
+
         })
     }
 
+
     // scroll chatBox ke bawah setiap kali ada pesan baru
     chatBox.scrollTop = chatBox.scrollHeight
+
 })
 
+
+// =====================================================
+// RENDER PESAN
+// =====================================================
 
 function renderPesan(
     username,
@@ -351,21 +372,18 @@ function renderPesan(
         messageDiv.classList.add("my-message")
     }
 
+
     // memanggil fungsi stringToColor
     const warnaUser = stringToColor(username)
 
     let isiPesan
 
+
     // jika tipe pesan adalah stiker
     if (tipe === "stiker") {
 
-        isiPesan = `
-            <img
-                src="${message}"
-                alt="stiker"
-                class="stiker"
-            />
-        `
+        isiPesan =
+            `<img src="${message}" alt="stiker" class="stiker" />`
 
     } else {
 
@@ -373,34 +391,45 @@ function renderPesan(
         isiPesan = `<span>${message}</span>`
     }
 
+
     // menambahkan konten pesan ke messageDiv
     messageDiv.innerHTML = `
         <div class="message-content">
-            <strong style="color: ${warnaUser}">${username}</strong>
+            <strong style="color: ${warnaUser}">
+                ${username}
+            </strong>
+
             ${isiPesan}
         </div>
 
         <span class="time">${waktu}</span>
     `
 
+
     // menambahkan messageDiv ke chatBox
     chatBox.appendChild(messageDiv)
 }
 
 
-// Fungsi untuk mengubah String Nama menjadi Warna (HSL)
+// =====================================================
+// MENGUBAH NAMA MENJADI WARNA
+// =====================================================
+
 function stringToColor(str) {
 
     let hash = 0
 
     for (let i = 0; i < str.length; i++) {
+
         hash =
             str.charCodeAt(i) +
             ((hash << 5) - hash)
     }
 
+
     // Ambil nilai Hue 0 - 360
     const hue = Math.abs(hash) % 360
+
 
     return `hsl(${hue}, 65%, 40%)`
 }
