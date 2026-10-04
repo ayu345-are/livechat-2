@@ -36,7 +36,7 @@ const messagesCollection = collection(db, "messages")
 // SUARA NOTIFIKASI
 // =====================================================
 
-const suaraNotifikasi = new Audio("notifikasi.mp3")
+const suaraNotifikasi = new Audio("notifikasipesan.mp3")
 suaraNotifikasi.volume = 0.7
 
 // Supaya pesan lama tidak menghasilkan suara
