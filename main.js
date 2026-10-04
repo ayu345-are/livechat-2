@@ -229,6 +229,9 @@ onSnapshot(queryPesan, (cuplikan) => {
     cuplikan.forEach((doc) => {
         // ambil data dari dokumen
         const data = doc.data()
+        
+        if (!data.waktu) {
+        return
 
         // membuat tampilan waktu
         const waktu = data.waktu.toDate().toLocaleTimeString(
